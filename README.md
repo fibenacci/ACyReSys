@@ -145,13 +145,11 @@ Wenn wir daraus ein belastbares System entwickeln wollen, sind die nächsten sau
 4. getrennte Simulation Plane für `Strix`
 5. echte Healing-Runner für Container- oder Service-Umgebungen
 
-## Arbeitsregeln
-
-Die Repo-spezifischen Agenten- und Architekturregeln stehen in `AGENTS.md`.
-
 ## Dokumentation
 
 - `docs/arc42/README.md`
   Erste arc42-Dokumentation der aktuellen Architekturhypothese.
 - `docs/arc42/glossary.md`
   Glossar für Fachbegriffe und Projektsprache.
+- `docs/arc42/adr/`
+  Erste Architekturentscheidungen als ADRs.

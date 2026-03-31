@@ -40,6 +40,21 @@ Der Fokus liegt aktuell auf einem kleinen, deterministischen Kontrollkern.
 
 ACyReSys verarbeitet simulierte oder beobachtete Sicherheitsereignisse, bewertet sie gegen ein Zustandsmodell und leitet daraus kontrollierte Reaktionen sowie Recovery-Schritte ab.
 
+```text
++------------------+        Events / Findings        +----------------------+
+|  Beobachtete     | ------------------------------> |      ACyReSys        |
+|  Infrastruktur   |                                 |  Kontrollkern        |
+|  oder Simulation | <------------------------------ |  Bewertung, Reaktion,|
++------------------+    Entscheidungen / Maßnahmen   |  Recovery, Verifikation
+                                                      +----------------------+
+                                                                  |
+                                                                  v
+                                                      +----------------------+
+                                                      |  Journal / Nachweis  |
+                                                      |  von Entscheidungen  |
+                                                      +----------------------+
+```
+
 ### Technischer Kontext
 
 Der aktuelle Prototyp besteht aus:
@@ -50,6 +65,13 @@ Der aktuelle Prototyp besteht aus:
 - lokaler CLI
 
 Externe Sensoren, Orchestratoren, Datenbanken oder Policy-Backends sind noch nicht angeschlossen.
+
+```text
++-------------+       +-------------------+       +------------------+
+| Szenarien / | ----> |  ACyReSys Engine  | ----> | CLI / JSON-Ausgabe|
+| Telemetrie  |       |  Analyse + Aktion |       | und Journal       |
++-------------+       +-------------------+       +------------------+
+```
 
 ## 4. Lösungsstrategie
 
@@ -74,6 +96,35 @@ Die Lösungsstrategie für den Prototypen ist bewusst konservativ:
 - `acyresys/cli.py`
   Startet reproduzierbare lokale Szenarien.
 
+### Statische Bausteinsicht
+
+```text
++---------------------------------------------------------------+
+|                           ACyReSys                            |
++---------------------------------------------------------------+
+|                                                               |
+|  +-------------------+     +-------------------------------+  |
+|  | scenarios.py      | --> | engine.py                     |  |
+|  | kontrollierte     |     | Analyse, Entscheidung,       |  |
+|  | Eingaben          |     | Aktion, Recovery, Verify     |  |
+|  +-------------------+     +---------------+---------------+  |
+|                                              |                  |
+|                                              v                  |
+|                            +-------------------------------+   |
+|                            | model.py                      |   |
+|                            | Assets, Events, Decisions,    |   |
+|                            | JournalEntry, Zustände        |   |
+|                            +-------------------------------+   |
+|                                              ^                  |
+|                                              |                  |
+|                            +-------------------------------+   |
+|                            | cli.py                        |   |
+|                            | Startet Szenarien und gibt    |   |
+|                            | Resultate aus                 |   |
+|                            +-------------------------------+   |
++---------------------------------------------------------------+
+```
+
 ## 6. Laufzeitsicht
 
 Ein typischer Ablauf im Prototyp:
@@ -86,12 +137,46 @@ Ein typischer Ablauf im Prototyp:
 6. Recovery und Verifikation prüfen, ob ein akzeptabler Zustand erreicht wurde.
 7. Alle Schritte werden journalisiert.
 
+```text
++-------------+    +-----------+    +------------+    +---------+
+| Asset       |    | Szenario  |    | Engine     |    | Journal |
++------+------+    +-----+-----+    +-----+------+    +----+----+
+       |                 |                |                |
+       | registrieren    |                |                |
+       |---------------->|                |                |
+       |                 | Event erzeugen |                |
+       |                 |--------------->|                |
+       |                 |                | analysieren     |
+       |                 |                |--------------->|
+       |                 |                | Aktion wählen   |
+       |                 |                | Recovery        |
+       |                 |                | Verify          |
+       | Zustand ändern  |                |--------------->|
+       |<---------------------------------|                |
+```
+
 ## 7. Verteilungssicht
 
 Der aktuelle Stand ist nicht verteilt.
 Alles läuft lokal innerhalb eines Python-Prozesses.
 
 Die spätere Zielrichtung kann getrennte Kontroll-, Simulations- und Ausführungsebenen umfassen, ist aber noch nicht implementiert.
+
+```text
+Heute:
+
++---------------------------------------------+
+|  1 Prozess / 1 Laufzeit / 1 lokales CLI     |
+|  scenarios + engine + model + Ausgabe       |
++---------------------------------------------+
+
+Später denkbar:
+
++----------------+   +----------------+   +----------------+
+| Simulation     |   | Control Plane  |   | Execution      |
+| Plane          |   | Bewertung      |   | / Recovery     |
++----------------+   +----------------+   +----------------+
+```
 
 ## 8. Querschnittliche Konzepte
 
@@ -117,6 +202,15 @@ Deshalb sind Reaktionsstufen und Human Gates zentral.
 
 Adversariale Logik wird zunächst nur als kontrollierte Simulation modelliert.
 Das reduziert Risiko und schärft die Anforderungen an Detection, Recovery und Governance.
+
+### ADR-Übersicht
+
+- `ADR-001`: ACyReSys bleibt zunächst ein deterministischer Einzelprozess-Prototyp.
+- `ADR-002`: `Strix` wird als kontrollierter Simulator modelliert, nicht als freier Offensiv-Agent.
+- `ADR-003`: autonome Reaktionen werden über Response Tiers begrenzt.
+- `ADR-004`: Recovery gilt erst nach Verifikation als erfolgreich.
+
+Die einzelnen ADRs liegen unter [adr/](/home/fibenacci/Dokumente/Projekte/ACyReSys/docs/arc42/adr).
 
 ## 10. Qualitätsanforderungen
 
